@@ -34,22 +34,28 @@ def activation_node_callback(flag):
         print("Do client request :)")
         #thTargets = rospy.Subscriber(thermal_targets, CVThermalObjects, get_objects_detected)
         flag_catch_msg = True
-        while flag_catch_msg:
-            thTargets = rospy.wait_for_message(thermal_targets, CVThermalObjects)
-            if len(thTargets.objects) != 0:
-                flag_catch_msg = False
-                print('Targets cached ...', len(thTargets.objects))
-        
-        rospy.wait_for_service("get_temperature_measures")
         try:
-            request_client = rospy.ServiceProxy("get_temperature_measures", temperatureMeasures)
-            resp = request_client(thTargets.objects, thTargets.frame)
-            #print(resp)
-            print("*"*40)
-            print("Client request attended ...")
-        except rospy.ServiceException:
-            print("Did not get response of service :(")
+            while flag_catch_msg:
+                thTargets = rospy.wait_for_message(thermal_targets, CVThermalObjects, timeout=10)
+                if len(thTargets.objects) != 0:
+                    flag_catch_msg = False
+                    print('Targets cached ...', len(thTargets.objects))
+            
+            rospy.wait_for_service("get_temperature_measures")
+            
+            try:
+                request_client = rospy.ServiceProxy("get_temperature_measures", temperatureMeasures)
+                resp = request_client(thTargets.objects, thTargets.frame)
+                #print(resp)
+                print("*"*40)
+                print("Client request attended ...")
+            except rospy.ServiceException:
+                print("Did not get response of service :(")
         
+        except rospy.ROSException:
+            print("*"*40)
+            print("Did not get response of service :(, No answer of thermal_objects_found topic")
+                
     else:
         print("*"*40)
         #thTargets.unregister()
