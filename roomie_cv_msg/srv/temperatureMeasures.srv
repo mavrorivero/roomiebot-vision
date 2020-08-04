@@ -1,0 +1,5 @@
+#Array of Objects detected, see more in CVThermalObject.msg
+CVThermalObject[] objects
+sensor_msgs/Image frame
+---
+CVObject[] rois
