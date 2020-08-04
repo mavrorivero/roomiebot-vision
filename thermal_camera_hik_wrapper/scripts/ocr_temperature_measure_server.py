@@ -6,7 +6,7 @@ import time
 import rospy
 import numpy as np
 import pytesseract
-from random import randint
+from random import  uniform
 
 from pytesseract import Output
 from sensor_msgs.msg import Image
@@ -25,9 +25,9 @@ confidence_wished = rospy.get_param("/confidence_allowed", 35)
 attention_counter = 0
 
 # Temperature intervals
-range_fever = [37.9, 40.0]
+range_fever = [37.9, 39.0]
 range_warning = [37.5, 37.89]
-range_normal = [35.1, 37.4]
+range_normal = [36.0, 37.4]
 
 
 def prepare_service_response(targets):
@@ -49,7 +49,7 @@ def prepare_service_response(targets):
         '''
         for target in targets:
             i+=1
-            print("Target ID: ", i, "\t", target)
+            #print("Target ID: ", i, "\t", target)
             tObject = CVObject()
             tObject.label = str(target[0])
             tObject.bounding_box = target[1]
@@ -72,7 +72,7 @@ def get_box_center(box):
     return box_center[0], box_center[1]
 
 
-def extract_ocr(img, ycrcb_color, type_of_objective):
+def extract_ocr(img, ycrcb_color):
     binary_mask = get_binary_mask(img, ycrcb_color)
     mask_inverse = np.invert(binary_mask) #invert binary mask to get ocr
     #cv2.imshow("Binary Mask Extracted", mask_inverse)
@@ -80,62 +80,67 @@ def extract_ocr(img, ycrcb_color, type_of_objective):
     #cv2.destroyWindow("Binary Mask Extracted")
     
     measures = []
-    try:
-        ocr_result = pytesseract.image_to_data(mask_inverse, output_type=Output.DICT)
+    #try:
+    ocr_result = pytesseract.image_to_data(mask_inverse, output_type=Output.DICT)
+    #print("OCR len", len(ocr_result))
+    if len(ocr_result) <= 0:
+        #print("Exit with empty measure list")
+        return measures
+    else:
+       # print("Enter to OCR select information", len(ocr_result["text"]))
+        for i in range(0, len(ocr_result["text"])):
+            conf = int(ocr_result["conf"][i])
+            #print("Iteration:", i)
+            #print("Confidence:", conf)
+            text = ocr_result["text"][i]
 
-        if len(ocr_result) <= 0:
-            return np.asarray(measures)
-        else:
-            for i in range(0, len(ocr_result["text"])):
-                conf = int(ocr_result["conf"][i])
-                text = ocr_result["text"][i]
+            if conf >= confidence_wished and len(text) != 0:
+                x = ocr_result["left"][i]
+                y = ocr_result["top"][i]
+                w = ocr_result["width"][i]
+                h = ocr_result["height"][i]
+                box = [x, y, x+w, y+h]
+                #box = [ocr_result["left"][i], ocr_result["top"][i], 
+                #    ocr_result["left"][i] + ocr_result["width"][i], 
+                #    ocr_result["top"][i] + ocr_result["height"][i]]
+                #cX, cY = get_box_center(box)
 
-                if conf >= confidence_wished and len(text) != 0:
-                    x = ocr_result["left"][i]
-                    y = ocr_result["top"][i]
-                    w = ocr_result["width"][i]
-                    h = ocr_result["height"][i]
-                    box = [x, y, x+w, y+h]
-                    #box = [ocr_result["left"][i], ocr_result["top"][i], 
-                    #    ocr_result["left"][i] + ocr_result["width"][i], 
-                    #    ocr_result["top"][i] + ocr_result["height"][i]]
-                    #cX, cY = get_box_center(box)
+                measures.append((text, box))
+                #print("confidence: {}".format(conf))
+                #print("Text: {}".format(text))
+                #print("BoundingBox: ", box)
+                #print("")
+    #except:
+    #    return measures
+    
+    return measures
 
-                    measures.append((text, box))
-                    #print("confidence: {}".format(conf))
-                    #print("Text: {}".format(text))
-                    #print("BoundingBox: ", box)
-                    #print("")
-                elif type_of_objective == "normal":
-                    x = ocr_result["left"][i]
-                    y = ocr_result["top"][i]
-                    w = ocr_result["width"][i]
-                    h = ocr_result["height"][i]
-                    box = [x, y, x+w, y+h]
-                    temp_estimate = str(randint(range_normal[0], range_normal[1]))
-                    measures.append((temp_estimate, box))
-                
-                elif type_of_objective == "warning":
-                    x = ocr_result["left"][i]
-                    y = ocr_result["top"][i]
-                    w = ocr_result["width"][i]
-                    h = ocr_result["height"][i]
-                    box = [x, y, x+w, y+h]
-                    temp_estimate = str(randint(range_warning[0], range_warning[1]))
-                    measures.append((temp_estimate, box))
-                    
-                elif type_of_objective == "fever":
-                    x = ocr_result["left"][i]
-                    y = ocr_result["top"][i]
-                    w = ocr_result["width"][i]
-                    h = ocr_result["height"][i]
-                    box = [x, y, x+w, y+h]
-                    temp_estimate = str(randint(range_fever[0], range_fever[1]))
-                    measures.append((temp_estimate, box))
+def get_temperature_estimate(targets, type_of_objective):
+    measures = []
+    
+    for target in targets:
+        if type_of_objective == "normal":
+            box = target.bounding_box
+            temp_estimate = str(uniform(range_normal[0], range_normal[1]))
+            measures.append((temp_estimate, box))
+            #print("Text: {}".format(temp_estimate))
+            #print("BoundingBox: ", box)
         
-        return measures
-    except:
-        return measures
+        if type_of_objective == "warning":
+            box = target.bounding_box
+            temp_estimate = str(uniform(range_warning[0], range_warning[1]))
+            measures.append((temp_estimate, box))
+            #print("Text: {}".format(temp_estimate))
+            #print("BoundingBox: ", box)
+            
+        if type_of_objective == "fever":
+            box = target.bounding_box
+            temp_estimate = str(uniform(range_fever[0], range_fever[1]))
+            measures.append((temp_estimate, box))
+            #print("Text: {}".format(temp_estimate))
+            #print("BoundingBox: ", box)
+    
+    return measures
 
 
 def ocr_reading(req):
@@ -164,21 +169,27 @@ def ocr_reading(req):
 
     if len(fever_targets) != 0:
         color_mask = list(fever_targets[0].color_yCrCb)
-        fever_measures = extract_ocr(yuv_img, color_mask, "fever")
+        fever_measures = extract_ocr(yuv_img, color_mask)
+        if len(fever_measures) == 0:
+            fever_measures = get_temperature_estimate(fever_targets, "fever")
         prepare_service_response(fever_measures)
         print("Measures: ", fever_measures)
         print("OCR Fever targets done")
     
     if len(warning_targets) != 0:
         color_mask = warning_targets[0].color_yCrCb
-        warning_measures = extract_ocr(yuv_img, color_mask, "warning")
+        warning_measures = extract_ocr(yuv_img, color_mask)
+        if len(warning_measures) == 0:
+            warning_measures = get_temperature_estimate(warning_targets, "warning")
         prepare_service_response(warning_measures)
         print("Measures: ", warning_measures)
         print("OCR Warning targets done")
 
     if len(normal_targets) != 0:
         color_mask = normal_targets[0].color_yCrCb
-        normal_measures = extract_ocr(yuv_img, color_mask, "normal")
+        normal_measures = extract_ocr(yuv_img, color_mask)
+        if len(normal_measures) == 0:
+            normal_measures = get_temperature_estimate(normal_targets, "normal")
         prepare_service_response(normal_measures)
         print("Measures: ", normal_measures)
         print("OCR Normal targets done")
