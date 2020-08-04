@@ -80,38 +80,38 @@ def extract_ocr(img, ycrcb_color):
     #cv2.destroyWindow("Binary Mask Extracted")
     
     measures = []
-    #try:
-    ocr_result = pytesseract.image_to_data(mask_inverse, output_type=Output.DICT)
-    #print("OCR len", len(ocr_result))
-    if len(ocr_result) <= 0:
-        #print("Exit with empty measure list")
+    try:
+        ocr_result = pytesseract.image_to_data(mask_inverse, output_type=Output.DICT)
+        #print("OCR len", len(ocr_result))
+        if len(ocr_result) <= 0:
+            #print("Exit with empty measure list")
+            return measures
+        else:
+        # print("Enter to OCR select information", len(ocr_result["text"]))
+            for i in range(0, len(ocr_result["text"])):
+                conf = int(ocr_result["conf"][i])
+                #print("Iteration:", i)
+                #print("Confidence:", conf)
+                text = ocr_result["text"][i]
+
+                if conf >= confidence_wished and len(text) != 0:
+                    x = ocr_result["left"][i]
+                    y = ocr_result["top"][i]
+                    w = ocr_result["width"][i]
+                    h = ocr_result["height"][i]
+                    box = [x, y, x+w, y+h]
+                    #box = [ocr_result["left"][i], ocr_result["top"][i], 
+                    #    ocr_result["left"][i] + ocr_result["width"][i], 
+                    #    ocr_result["top"][i] + ocr_result["height"][i]]
+                    #cX, cY = get_box_center(box)
+
+                    measures.append((text, box))
+                    #print("confidence: {}".format(conf))
+                    #print("Text: {}".format(text))
+                    #print("BoundingBox: ", box)
+                    #print("")
+    except:
         return measures
-    else:
-       # print("Enter to OCR select information", len(ocr_result["text"]))
-        for i in range(0, len(ocr_result["text"])):
-            conf = int(ocr_result["conf"][i])
-            #print("Iteration:", i)
-            #print("Confidence:", conf)
-            text = ocr_result["text"][i]
-
-            if conf >= confidence_wished and len(text) != 0:
-                x = ocr_result["left"][i]
-                y = ocr_result["top"][i]
-                w = ocr_result["width"][i]
-                h = ocr_result["height"][i]
-                box = [x, y, x+w, y+h]
-                #box = [ocr_result["left"][i], ocr_result["top"][i], 
-                #    ocr_result["left"][i] + ocr_result["width"][i], 
-                #    ocr_result["top"][i] + ocr_result["height"][i]]
-                #cX, cY = get_box_center(box)
-
-                measures.append((text, box))
-                #print("confidence: {}".format(conf))
-                #print("Text: {}".format(text))
-                #print("BoundingBox: ", box)
-                #print("")
-    #except:
-    #    return measures
     
     return measures
 
