@@ -27,8 +27,8 @@
     </node>
 -->   
     <node name="object_detection" pkg="ros_openvino" type="object_detection" output="screen">
-        <remap from="/object_detection/input_image" to="/usb_cam/image_rect_color" />
-        <remap from="/object_detection/camera_info" to="/usb_cam/camera_info" />
+        <remap from="/object_detection/input_image" to="hardware/usb_cam/image_raw" />
+        <remap from="/object_detection/camera_info" to="hardware/usb_cam/camera_info" />
         
         <param name="threshold"         value="0.5" />
         <param name="target"            value="MYRIAD" />
@@ -39,6 +39,8 @@
         <param name="output_as_image"   value="true" />
         <param name="output_as_list"    value="true" />
         <param name="depth_analysis"    value="false" />
+        <param name="find_specific_target"  value="true"/>
+        <param name="specific_target"   value="person"/>
     </node>
 
 <!--    <node name="analysis_viewer" pkg="image_view" type="image_view">
