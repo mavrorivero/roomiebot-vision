@@ -1,0 +1,3 @@
+[submodule "ros_openvino"]
+	path = ros_openvino
+	url = https://github.com/Kigs-mx/ros_openvino.git
