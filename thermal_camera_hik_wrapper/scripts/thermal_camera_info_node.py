@@ -33,7 +33,8 @@ maxPtsRect = 20
 nonMaxSupOverlap = 45
 
 #Get topic of thermal camera streaming
-thermal_stream = rospy.get_param("/thermal_camera_stream_topic", "/hik_cam_node/hik_camera")
+#thermal_stream = rospy.get_param("/thermal_camera_stream_topic", "/hik_cam_node/hik_camera")
+thermal_stream = rospy.get_param("/thermal_camera_stream_topic", "/hik2/hik_cam_node/hik_thermal_cam_ds2t/image_raw")
 #Topic for publish results
 pub_targets = rospy.Publisher("roomie_cv/thermal_targets_found", CVThermalObjects, queue_size=1)
 
