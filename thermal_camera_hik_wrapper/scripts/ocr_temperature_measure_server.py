@@ -82,12 +82,12 @@ def extract_ocr(img, ycrcb_color):
     measures = []
     try:
         ocr_result = pytesseract.image_to_data(mask_inverse, output_type=Output.DICT)
-        #print("OCR len", len(ocr_result))
+        print("OCR len", len(ocr_result))
         if len(ocr_result) <= 0:
             #print("Exit with empty measure list")
             return measures
         else:
-        # print("Enter to OCR select information", len(ocr_result["text"]))
+            #print("Enter to OCR select information", len(ocr_result["text"]))
             for i in range(0, len(ocr_result["text"])):
                 conf = int(ocr_result["conf"][i])
                 #print("Iteration:", i)
@@ -100,10 +100,10 @@ def extract_ocr(img, ycrcb_color):
                     w = ocr_result["width"][i]
                     h = ocr_result["height"][i]
                     box = [x, y, x+w, y+h]
-                    #box = [ocr_result["left"][i], ocr_result["top"][i], 
-                    #    ocr_result["left"][i] + ocr_result["width"][i], 
-                    #    ocr_result["top"][i] + ocr_result["height"][i]]
-                    #cX, cY = get_box_center(box)
+                        #box = [ocr_result["left"][i], ocr_result["top"][i], 
+                        #    ocr_result["left"][i] + ocr_result["width"][i], 
+                        #    ocr_result["top"][i] + ocr_result["height"][i]]
+                        #cX, cY = get_box_center(box)
 
                     measures.append((text, box))
                     #print("confidence: {}".format(conf))
