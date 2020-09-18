@@ -8,6 +8,7 @@ It also has a OCR service node, that could return the temperature measure of all
 
 This package use the follow differente and specific libraries: pytesseract and imutils. With the next command lines, you cand install this libraries:
 ```
+    sudo apt-get install tesseract-ocr
     pip install pytesseract
 ```
 and

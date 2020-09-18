@@ -10,7 +10,7 @@ from random import  uniform
 
 from pytesseract import Output
 from sensor_msgs.msg import Image
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, String
 from cv_bridge import CvBridge, CvBridgeError
 
 from roomie_cv_msg.msg import CVObjects
@@ -82,12 +82,12 @@ def extract_ocr(img, ycrcb_color):
     measures = []
     try:
         ocr_result = pytesseract.image_to_data(mask_inverse, output_type=Output.DICT)
-        #print("OCR len", len(ocr_result))
+        print("OCR len", len(ocr_result))
         if len(ocr_result) <= 0:
             #print("Exit with empty measure list")
             return measures
         else:
-        # print("Enter to OCR select information", len(ocr_result["text"]))
+            #print("Enter to OCR select information", len(ocr_result["text"]))
             for i in range(0, len(ocr_result["text"])):
                 conf = int(ocr_result["conf"][i])
                 #print("Iteration:", i)
@@ -100,10 +100,10 @@ def extract_ocr(img, ycrcb_color):
                     w = ocr_result["width"][i]
                     h = ocr_result["height"][i]
                     box = [x, y, x+w, y+h]
-                    #box = [ocr_result["left"][i], ocr_result["top"][i], 
-                    #    ocr_result["left"][i] + ocr_result["width"][i], 
-                    #    ocr_result["top"][i] + ocr_result["height"][i]]
-                    #cX, cY = get_box_center(box)
+                        #box = [ocr_result["left"][i], ocr_result["top"][i], 
+                        #    ocr_result["left"][i] + ocr_result["width"][i], 
+                        #    ocr_result["top"][i] + ocr_result["height"][i]]
+                        #cX, cY = get_box_center(box)
 
                     measures.append((text, box))
                     #print("confidence: {}".format(conf))
@@ -146,6 +146,7 @@ def get_temperature_estimate(targets, type_of_objective):
 def ocr_reading(req):
     global confidence_wished
     global temperature_measures
+    global loginfo_pub
     print("*"*40)
     print("Attending Service ... :)")
     print("*"*40)
@@ -199,11 +200,12 @@ def ocr_reading(req):
     print("*"*40)
     print("Service attended ... ;)")
     #return temperatureMeasuresResponse(temperatures)
+    loginfo_pub.publish(str(temperature_measures))
     return temperatureMeasuresResponse(temperature_measures)
     
 
 def ocr_temperature_measure(args):
-
+    global loginfo_pub
     rospy.init_node("get_temperature_measures_server", anonymous=False)
     print("."*60)
     print(" Started Service, Get OCR temperatue measure ...")
@@ -211,7 +213,7 @@ def ocr_temperature_measure(args):
     print("."*60)
     
     s = rospy.Service("get_temperature_measures", temperatureMeasures, ocr_reading)
-
+    loginfo_pub = rospy.Publisher("/ocr_loginfo", String, queue_size=10)
     rospy.spin()
 
 if __name__ == "__main__":
