@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_runtime
   sensor_msgs
   std_msgs
+  geometry_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -55,6 +56,8 @@ find_package(catkin REQUIRED COMPONENTS
    CVObjects.msg
    CVThermalObject.msg
    CVThermalObjects.msg
+   CVTrackerObject.msg
+   CVTrackerObjects.msg
 )
 
 ## Generate services in the 'srv' folder

@@ -1,0 +1,5 @@
+geometry_msgs/PoseStamped position
+std_msgs/Int32 persistence_score
+std_msgs/Int32 loss_score
+std_msgs/Int32 obj_id
+string obj_text
