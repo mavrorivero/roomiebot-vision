@@ -285,23 +285,23 @@ def activation_node_callback(data):
     active_node = data.data
     
     if active_node:
-        print("*"*40)
-        print("Node Enabled :)")
+        rospy.loginfo("*"*40)
+        rospy.loginfo("Node Enabled :)")
         img = rospy.Subscriber(thermal_stream, Image, wrapper_callback)
     else:
         img.unregister()
-        print("*"*40)
-        print("Node Disabled 0_0")
+        rospy.loginfo("*"*40)
+        rospy.loginfo("Node Disabled 0_0")
 
 
 def main(args):
     global img
     
     rospy.init_node("thermal_camera_wrapper_node", anonymous=False)
-    print("."*60)
-    print(" Started thermal camera info script wrapper...")
-    print("  by NachoBot 0_0")
-    print("."*60)
+    rospy.loginfo("."*60)
+    rospy.loginfo(" Started thermal camera info script wrapper...")
+    rospy.loginfo("  by NachoBot 0_0")
+    rospy.loginfo("."*60)
    
     enable_node = rospy.get_param("/enable_search_humans_by_temp", "/roomie_cv/enable_search_by_temperature")
 
@@ -313,8 +313,8 @@ def main(args):
         rospy.spin()
     
     cv2.destroyAllWindows()
-    print("*"*60)
-    print("Thermal_camera_wrapper node finished ...")
+    rospy.loginfo("*"*60)
+    rospy.loginfo("Thermal_camera_wrapper node finished ...")
 
 if __name__ == "__main__":
     main(sys.argv)

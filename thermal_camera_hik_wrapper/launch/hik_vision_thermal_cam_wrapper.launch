@@ -1,0 +1,9 @@
+<launch>
+
+    <node name="thermal_camera_info_node"      pkg="thermal_camera_hik_wrapper"      type="thermal_camera_info_node.py"  >
+        <param name="thermal_stream"            value="/hik2/hik_cam_node/hik_thermal_cam_ds2t/image_raw"/>
+    </node>
+
+    <node name="ocr_temperature_measure_server"      pkg="thermal_camera_hik_wrapper"      type="ocr_temperature_measure_server.py"/>
+    
+</launch>

@@ -25,9 +25,18 @@ confidence_wished = rospy.get_param("/confidence_allowed", 35)
 attention_counter = 0
 
 # Temperature intervals
-range_fever = [37.9, 39.0]
-range_warning = [37.5, 37.89]
-range_normal = [36.0, 37.4]
+fever_min_meas = rospy.get_param("/fever_min_measure", 37.9)
+fever_max_meas = rospy.get_param("/fever_max_measure", 39.0)
+
+warning_min_meas = rospy.get_param("/warning_min_measure", 37.5)
+warning_max_meas = rospy.get_param("/warning_max_measure", 37.89)
+
+normal_min_meas = rospy.get_param("/normal_min_measure", 35.5)
+normal_max_meas = rospy.get_param("/normal_max_measure", 37.4)
+
+range_fever = [fever_min_meas, fever_max_meas]
+range_warning = [warning_min_meas, warning_max_meas]
+range_normal = [normal_min_meas, normal_max_meas]
 
 
 def prepare_service_response(targets):
@@ -147,9 +156,9 @@ def ocr_reading(req):
     global confidence_wished
     global temperature_measures
     global loginfo_pub
-    print("*"*40)
-    print("Attending Service ... :)")
-    print("*"*40)
+    rospy.loginfo("*"*40)
+    rospy.loginfo("Attending Service ... :)")
+    rospy.loginfo("*"*40)
 
     bridge = CvBridge()
     targets = req.objects
@@ -197,8 +206,8 @@ def ocr_reading(req):
 
     #temperatures = prepare_service_response(targets)
     
-    print("*"*40)
-    print("Service attended ... ;)")
+    rospy.loginfo("*"*40)
+    rospy.loginfo("Service attended ... ;)")
     #return temperatureMeasuresResponse(temperatures)
     loginfo_pub.publish(str(temperature_measures))
     return temperatureMeasuresResponse(temperature_measures)
@@ -207,10 +216,10 @@ def ocr_reading(req):
 def ocr_temperature_measure(args):
     global loginfo_pub
     rospy.init_node("get_temperature_measures_server", anonymous=False)
-    print("."*60)
-    print(" Started Service, Get OCR temperatue measure ...")
-    print("  by NachoBot 0_0")
-    print("."*60)
+    rospy.loginfo("."*60)
+    rospy.loginfo(" Started Service, Get OCR temperatue measure ...")
+    rospy.loginfo("  by NachoBot 0_0")
+    rospy.loginfo("."*60)
     
     s = rospy.Service("get_temperature_measures", temperatureMeasures, ocr_reading)
     loginfo_pub = rospy.Publisher("/ocr_loginfo", String, queue_size=10)
