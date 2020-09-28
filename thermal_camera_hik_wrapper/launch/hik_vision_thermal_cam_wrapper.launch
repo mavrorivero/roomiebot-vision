@@ -1,9 +1,17 @@
 <launch>
 
     <node name="thermal_camera_info_node"      pkg="thermal_camera_hik_wrapper"      type="thermal_camera_info_node.py"  >
-        <param name="thermal_stream"            value="/hik2/hik_cam_node/hik_thermal_cam_ds2t/image_raw"/>
+        <param name="thermal_stream"                value="/hik2/hik_cam_node/hik_thermal_cam_ds2t/image_raw"/>
     </node>
 
-    <node name="ocr_temperature_measure_server"      pkg="thermal_camera_hik_wrapper"      type="ocr_temperature_measure_server.py"/>
+    <node name="ocr_temperature_measure_server"      pkg="thermal_camera_hik_wrapper"      type="ocr_temperature_measure_server.py">
+        <param name="confidence_wished"             value="35"/>
+        <param name="/fever_min_measure"            value="37.9"/>
+        <param name="/fever_max_measure"            value="39.0"/>
+        <param name="/warning_min_measure"          value="37.5"/>
+        <param name="/warning_max_measure"          value="37.89"/>
+        <param name="/normal_min_measure"           value="35.5"/>
+        <param name="/normal_max_measure"           value="37.4"/>
+    </node>
     
 </launch>
