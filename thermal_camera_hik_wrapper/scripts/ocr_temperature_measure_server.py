@@ -113,8 +113,9 @@ def extract_ocr(img, ycrcb_color):
                         #    ocr_result["left"][i] + ocr_result["width"][i], 
                         #    ocr_result["top"][i] + ocr_result["height"][i]]
                         #cX, cY = get_box_center(box)
-
-                    measures.append((text, box))
+                    is_valid = text.replace('.', '', 1).isdigit()
+                    if is_valid:
+                        measures.append((text, box))
                     #print("confidence: {}".format(conf))
                     #print("Text: {}".format(text))
                     #print("BoundingBox: ", box)
