@@ -26,7 +26,7 @@ attention_counter = 0
 
 # Temperature intervals
 fever_min_meas = rospy.get_param("/fever_min_measure", 37.9)
-fever_max_meas = rospy.get_param("/fever_max_measure", 39.0)
+fever_max_meas = rospy.get_param("/fever_max_measure", 39.5)
 
 warning_min_meas = rospy.get_param("/warning_min_measure", 37.5)
 warning_max_meas = rospy.get_param("/warning_max_measure", 37.89)
@@ -153,6 +153,21 @@ def get_temperature_estimate(targets, type_of_objective):
     return measures
 
 
+def check_ocr_measure(str_temp_ocr, temp_range, temp_label, targets_t):
+    per_valid_measures, temp_valid = [], []
+    # convert string 2 float all the measures in list
+    for measure in str_temp_ocr:
+       per_valid_measures.append(float(measure)) 
+    
+    for ocr_measure in per_valid_measures:
+        if(ocr_measure >= temp_range[0] and ocr_measure <= temp_range[1]):
+            temp_valid = ocr_measure
+        else:
+            temp_valid = get_temperature_estimate(targets_t, temp_label)
+    
+    return temp_valid
+
+
 def ocr_reading(req):
     global confidence_wished
     global temperature_measures
@@ -181,6 +196,7 @@ def ocr_reading(req):
     if len(fever_targets) != 0:
         color_mask = list(fever_targets[0].color_yCrCb)
         fever_measures = extract_ocr(yuv_img, color_mask)
+        fever_measures = check_ocr_measure(fever_measures, range_fever, "ferver", fever_targets)
         if len(fever_measures) == 0:
             fever_measures = get_temperature_estimate(fever_targets, "fever")
         prepare_service_response(fever_measures)
@@ -190,6 +206,7 @@ def ocr_reading(req):
     if len(warning_targets) != 0:
         color_mask = warning_targets[0].color_yCrCb
         warning_measures = extract_ocr(yuv_img, color_mask)
+        warning_measures = check_ocr_measure(warning_measures, range_warning, "warning", warning_targets)
         if len(warning_measures) == 0:
             warning_measures = get_temperature_estimate(warning_targets, "warning")
         prepare_service_response(warning_measures)
@@ -199,6 +216,7 @@ def ocr_reading(req):
     if len(normal_targets) != 0:
         color_mask = normal_targets[0].color_yCrCb
         normal_measures = extract_ocr(yuv_img, color_mask)
+        normal_measures = check_ocr_measure(normal_measures, range_normal, "normal", normal_targets)
         if len(normal_measures) == 0:
             normal_measures = get_temperature_estimate(normal_targets, "normal")
         prepare_service_response(normal_measures)
