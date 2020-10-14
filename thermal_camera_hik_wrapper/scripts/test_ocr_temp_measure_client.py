@@ -46,7 +46,7 @@ def activation_node_callback(flag):
             try:
                 request_client = rospy.ServiceProxy("get_temperature_measures", temperatureMeasures)
                 resp = request_client(thTargets.objects, thTargets.frame)
-                #print(resp)
+                print(resp)
                 print("*"*40)
                 print("Client request attended ...")
             except rospy.ServiceException:

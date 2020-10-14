@@ -7,6 +7,7 @@ import rospy
 import numpy as np
 import pytesseract
 from random import  uniform
+import unicodedata
 
 from pytesseract import Output
 from sensor_msgs.msg import Image
@@ -91,7 +92,7 @@ def extract_ocr(img, ycrcb_color):
     measures = []
     try:
         ocr_result = pytesseract.image_to_data(mask_inverse, output_type=Output.DICT)
-        print("OCR len", len(ocr_result))
+        #print("OCR len", len(ocr_result))
         if len(ocr_result) <= 0:
             #print("Exit with empty measure list")
             return measures
@@ -116,56 +117,53 @@ def extract_ocr(img, ycrcb_color):
                     is_valid = text.replace('.', '', 1).isdigit()
                     if is_valid:
                         measures.append((text, box))
-                    #print("confidence: {}".format(conf))
-                    #print("Text: {}".format(text))
-                    #print("BoundingBox: ", box)
-                    #print("")
+                        #print("confidence: {}".format(conf))
+                        #print("OCR Text: {}".format(text))
+                        #print("BoundingBox: ", box)
+                        #print("")
     except:
         return measures
     
     return measures
 
-def get_temperature_estimate(targets, type_of_objective):
-    measures = []
+
+
+def get_temperature_estimate(type_of_objective):
+    #for target in targets:
+    if type_of_objective == "normal":
+        temp_estimate = str(uniform(range_normal[0], range_normal[1]))
     
-    for target in targets:
-        if type_of_objective == "normal":
-            box = target.bounding_box
-            temp_estimate = str(uniform(range_normal[0], range_normal[1]))
-            measures.append((temp_estimate, box))
-            #print("Text: {}".format(temp_estimate))
-            #print("BoundingBox: ", box)
+    if type_of_objective == "warning":
+        temp_estimate = str(uniform(range_warning[0], range_warning[1]))
         
-        if type_of_objective == "warning":
-            box = target.bounding_box
-            temp_estimate = str(uniform(range_warning[0], range_warning[1]))
-            measures.append((temp_estimate, box))
-            #print("Text: {}".format(temp_estimate))
-            #print("BoundingBox: ", box)
-            
-        if type_of_objective == "fever":
-            box = target.bounding_box
-            temp_estimate = str(uniform(range_fever[0], range_fever[1]))
-            measures.append((temp_estimate, box))
-            #print("Text: {}".format(temp_estimate))
-            #print("BoundingBox: ", box)
-    
-    return measures
+    if type_of_objective == "fever":
+        temp_estimate = str(uniform(range_fever[0], range_fever[1]))
+
+    return temp_estimate
 
 
 def check_ocr_measure(str_temp_ocr, temp_range, temp_label, targets_t):
+    rospy.loginfo("Validating Temperature measures ....")
     per_valid_measures, temp_valid = [], []
     # convert string 2 float all the measures in list
     for measure in str_temp_ocr:
-       per_valid_measures.append(float(measure)) 
+        measure_str = unicodedata.normalize('NFKD', measure[0]).encode('ascii', 'ignore')
+        per_valid_measures.append(float(measure_str))
     
-    for ocr_measure in per_valid_measures:
+    for i, ocr_measure in enumerate(per_valid_measures):
         if(ocr_measure >= temp_range[0] and ocr_measure <= temp_range[1]):
-            temp_valid = ocr_measure
+            temp_valid.append(ocr_measure)
         else:
-            temp_valid = get_temperature_estimate(targets_t, temp_label)
+            temp_estimated = get_temperature_estimate(temp_label)
+            temp_valid.append(temp_estimated)
+
+    temp_checked = []
+    for i, temperature in enumerate(temp_valid):
+        temp_checked.append([temperature, str_temp_ocr[i][1]])
+        #print("Temp checked",temperature)
+        #print("BB:",str_temp_ocr[i][1])
     
-    return temp_valid
+    return temp_checked
 
 
 def ocr_reading(req):
@@ -197,8 +195,6 @@ def ocr_reading(req):
         color_mask = list(fever_targets[0].color_yCrCb)
         fever_measures = extract_ocr(yuv_img, color_mask)
         fever_measures = check_ocr_measure(fever_measures, range_fever, "ferver", fever_targets)
-        if len(fever_measures) == 0:
-            fever_measures = get_temperature_estimate(fever_targets, "fever")
         prepare_service_response(fever_measures)
         print("Measures: ", fever_measures)
         print("OCR Fever targets done")
@@ -207,8 +203,6 @@ def ocr_reading(req):
         color_mask = warning_targets[0].color_yCrCb
         warning_measures = extract_ocr(yuv_img, color_mask)
         warning_measures = check_ocr_measure(warning_measures, range_warning, "warning", warning_targets)
-        if len(warning_measures) == 0:
-            warning_measures = get_temperature_estimate(warning_targets, "warning")
         prepare_service_response(warning_measures)
         print("Measures: ", warning_measures)
         print("OCR Warning targets done")
@@ -217,8 +211,8 @@ def ocr_reading(req):
         color_mask = normal_targets[0].color_yCrCb
         normal_measures = extract_ocr(yuv_img, color_mask)
         normal_measures = check_ocr_measure(normal_measures, range_normal, "normal", normal_targets)
-        if len(normal_measures) == 0:
-            normal_measures = get_temperature_estimate(normal_targets, "normal")
+        #if len(normal_measures) == 0:
+        #    normal_measures = get_temperature_estimate(normal_targets, "normal")
         prepare_service_response(normal_measures)
         print("Measures: ", normal_measures)
         print("OCR Normal targets done")
@@ -241,7 +235,7 @@ def ocr_temperature_measure(args):
     rospy.loginfo("."*60)
     
     s = rospy.Service("get_temperature_measures", temperatureMeasures, ocr_reading)
-    loginfo_pub = rospy.Publisher("/ocr_loginfo", String, queue_size=10)
+    loginfo_pub = rospy.Publisher("/roomie_cv/ocr_loginfo", String, queue_size=10)
     rospy.spin()
 
 if __name__ == "__main__":
