@@ -170,6 +170,7 @@ def get_temperature_estimate(type_of_objective):
 
 def check_ocr_measure(str_temp_ocr, temp_range, temp_label, targets_t):
     rospy.loginfo("Validating Temperature measures ....")
+    rospy.loginfo(temp_label)
     per_valid_measures, temp_valid = [], []
     # convert string 2 float all the measures in list
     for measure in str_temp_ocr:
@@ -220,7 +221,7 @@ def ocr_reading(req):
     if len(fever_targets) != 0:
         color_mask = list(fever_targets[0].color_yCrCb)
         fever_measures = extract_ocr(yuv_img, color_mask)
-        fever_measures = check_ocr_measure(fever_measures, range_fever, "ferver", fever_targets)
+        fever_measures = check_ocr_measure(fever_measures, range_fever, "fever", fever_targets)
         if len(fever_measures) == 0:
             fever_measures = get_temperatures_estimate(fever_targets, "fever")
         prepare_service_response(fever_measures)
