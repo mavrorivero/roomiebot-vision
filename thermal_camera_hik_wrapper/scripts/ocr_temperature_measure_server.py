@@ -126,6 +126,32 @@ def extract_ocr(img, ycrcb_color):
     
     return measures
 
+def get_temperatures_estimate(targets, type_of_objective):
+    measures = []
+    
+    for target in targets:
+        if type_of_objective == "normal":
+            box = target.bounding_box
+            temp_estimate = str(uniform(range_normal[0], range_normal[1]))
+            measures.append((temp_estimate, box))
+            #print("Text: {}".format(temp_estimate))
+            #print("BoundingBox: ", box)
+        
+        if type_of_objective == "warning":
+            box = target.bounding_box
+            temp_estimate = str(uniform(range_warning[0], range_warning[1]))
+            measures.append((temp_estimate, box))
+            #print("Text: {}".format(temp_estimate))
+            #print("BoundingBox: ", box)
+            
+        if type_of_objective == "fever":
+            box = target.bounding_box
+            temp_estimate = str(uniform(range_fever[0], range_fever[1]))
+            measures.append((temp_estimate, box))
+            #print("Text: {}".format(temp_estimate))
+            #print("BoundingBox: ", box)
+    
+    return measures
 
 
 def get_temperature_estimate(type_of_objective):
@@ -195,6 +221,8 @@ def ocr_reading(req):
         color_mask = list(fever_targets[0].color_yCrCb)
         fever_measures = extract_ocr(yuv_img, color_mask)
         fever_measures = check_ocr_measure(fever_measures, range_fever, "ferver", fever_targets)
+        if len(fever_measures) == 0:
+            fever_measures = get_temperatures_estimate(fever_targets, "fever")
         prepare_service_response(fever_measures)
         print("Measures: ", fever_measures)
         print("OCR Fever targets done")
@@ -203,6 +231,8 @@ def ocr_reading(req):
         color_mask = warning_targets[0].color_yCrCb
         warning_measures = extract_ocr(yuv_img, color_mask)
         warning_measures = check_ocr_measure(warning_measures, range_warning, "warning", warning_targets)
+        if len(warning_measures) == 0:
+            warning_measures = get_temperatures_estimate(warning_targets, "warning")
         prepare_service_response(warning_measures)
         print("Measures: ", warning_measures)
         print("OCR Warning targets done")
@@ -211,8 +241,8 @@ def ocr_reading(req):
         color_mask = normal_targets[0].color_yCrCb
         normal_measures = extract_ocr(yuv_img, color_mask)
         normal_measures = check_ocr_measure(normal_measures, range_normal, "normal", normal_targets)
-        #if len(normal_measures) == 0:
-        #    normal_measures = get_temperature_estimate(normal_targets, "normal")
+        if len(normal_measures) == 0:
+            normal_measures = get_temperatures_estimate(normal_targets, "normal")
         prepare_service_response(normal_measures)
         print("Measures: ", normal_measures)
         print("OCR Normal targets done")
