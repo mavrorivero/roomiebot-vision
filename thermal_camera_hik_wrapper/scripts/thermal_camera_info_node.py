@@ -43,6 +43,8 @@ frame_count = 0
 success_pub_count = 0
 frame_pub_count = 0
 
+subs_counter=0
+
 # Malisiewicz et al.
 def non_max_suppression_fast(boxes, overlapThresh):
     # if there are no boxes, return an empty list
@@ -175,6 +177,7 @@ def wrapper_callback(data):
     global success_count
     global frame_count
     global results
+    global img
     
     #Array of objects create like ros msg to publish results
     results = CVThermalObjects()
@@ -265,6 +268,7 @@ def wrapper_callback(data):
         results.objects = []
     
     pub_targets.publish(results)
+    img.unregister()
     #rate.sleep()
 
     
@@ -281,13 +285,25 @@ def wrapper_callback(data):
 def activation_node_callback(data):
     global active_node
     global img
-    
+    global subs_counter
+
     active_node = data.data
     
     if active_node:
         rospy.loginfo("*"*40)
         rospy.loginfo("Node Enabled :)")
-        img = rospy.Subscriber(thermal_stream, Image, wrapper_callback)
+        try:
+            img = rospy.Subscriber(thermal_stream, Image, wrapper_callback)
+            subs_counter=0
+            rospy.loginfo('num connections: '+ str(img.get_num_connections()))
+        except:
+            rospy.loginfo('couldnt subscribe to thermal stream')
+            if (subs_counter < 3):
+                activation_node_callback(data)
+            else:
+                rospy.loginfo('failed with three attempts subscribe to thermal stream')
+                subs_counter=0
+            subs_counter += 1
     else:
         img.unregister()
         rospy.loginfo("*"*40)
