@@ -170,7 +170,7 @@ def get_temperature_estimate(type_of_objective):
 
 def check_ocr_measure(str_temp_ocr, temp_range, temp_label, targets_t):
     rospy.loginfo("Validating Temperature measures ....")
-    rospy.loginfo(temp_label)
+    # rospy.loginfo(temp_label)
     per_valid_measures, temp_valid = [], []
     # convert string 2 float all the measures in list
     for measure in str_temp_ocr:
