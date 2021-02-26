@@ -9,7 +9,7 @@ import numpy as np
 import random
 import rospkg
 
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, Empty
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 from roomie_cv_msg.msg import CVThermalObject
@@ -43,12 +43,14 @@ nonMaxSupOverlap = 45
 #thermal_stream = rospy.get_param("/thermal_camera_stream_topic", "/hik_cam_node/hik_camera")
 thermal_stream = rospy.get_param("/thermal_camera_stream_topic", "/hik2/hik_cam_node/hik_thermal_cam_ds2t/image_raw")
 #Topic for publish results
-pub_targets = rospy.Publisher("roomie_cv/thermal_targets_found", CVThermalObjects, queue_size=1)
+pub_targets = rospy.Publisher("roomie_cv/thermal_targets_found", CVThermalObjects, queue_size=5)
 
 success_count = 0
 frame_count = 0
 success_pub_count = 0
 frame_pub_count = 0
+filename = None
+results=None
 
 # Malisiewicz et al.
 def non_max_suppression_fast(boxes, overlapThresh):
@@ -182,28 +184,35 @@ def wrapper_callback(data):
     global success_count
     global frame_count
     global results
+    global pub_targets
     
     #Array of objects create like ros msg to publish results
     results = CVThermalObjects()
     #rate = rospy.Rate(5)
     img_src = cv2.imread(data)
-    cv2.imshow("Original Image with all bounding boxes found", img_src)
-    cv2.waitKey(1)
-    cv2.destroyAllWindows()
+    #cv2.imshow("Original Image with all bounding boxes found", img_src)
+    #cv2.waitKey(1)
+    #cv2.destroyAllWindows()
     bridge = CvBridge()
     #img_src = bridge.imgmsg_to_cv2(data, "bgr8")
+    rospy.loginfo('cvtColor')
     yuv_img = cv2.cvtColor(img_src, cv2.COLOR_BGR2YCR_CB)
     frame_count+=1
     
     #get binary mask to each target
+    rospy.loginfo('binarymask green')
     normal_measure_mask = get_binary_mask(yuv_img, green_ycrcb)
+    rospy.loginfo('binarymask yellow')
     warning_measure_mask = get_binary_mask(yuv_img, yellow_ycrcb)
+    rospy.loginfo('cvtColor red')
     alert_measure_mask = get_binary_mask(yuv_img, red_ycrcb)
-
+    rospy.loginfo('Normal tergets')
     are_normals, normalTargets = find_rois(normal_measure_mask, 
         min_percent_area, 1.5*max_percent_area)
+    rospy.loginfo('Warning measures')
     are_warnings, warningTargets = find_rois(warning_measure_mask, 
         min_percent_area, 1.5*max_percent_area)
+    rospy.loginfo('Alert measures')
     are_alerts, alertTargets = find_rois(alert_measure_mask, 
         min_percent_area, 1.5*max_percent_area)
 
@@ -275,6 +284,7 @@ def wrapper_callback(data):
         results.objects = []
     
     pub_targets.publish(results)
+    rospy.loginfo('targets published at ')
     #rate.sleep()
 
     
@@ -287,12 +297,26 @@ def wrapper_callback(data):
         print("Image saved")
     #'''
 
+def ask_image_callback(msg):
+    global results
+    global pub_targets
+    rospy.loginfo(type(results))
+    if results is None:
+        results=CVThermalObjects()
+        results.header.stamp = rospy.Time.now()
+        results.header.seq = 0
+        results.header.frame_id = 0
+        results.objects = []
+    rospy.loginfo('ask last results '+str(results.header.stamp)+"actual time: "+str(rospy.Time.now())+"diff: "+str(rospy.Time.now()-results.header.stamp))
+    pub_targets.publish(results)
+
 
 def activation_node_callback(data):
     global active_node
     global img
     global rospack
-    
+    global filename
+
     active_node = data.data
     
     if active_node:
@@ -322,8 +346,10 @@ def main(args):
     rospy.loginfo("."*60)
    
     enable_node = rospy.get_param("/enable_search_humans_by_temp", "/roomie_cv/enable_search_by_temperature")
+    ask_image = rospy.get_param("/ask_thermal_image", "/roomie_cv/ask_image")
 
     rospy.Subscriber(enable_node, Bool, activation_node_callback)
+    rospy.Subscriber(ask_image,Empty, ask_image_callback)
     #img = rospy.Subscriber(thermal_stream, Image, wrapper_callback)
     #img.unregister()
     
